@@ -49,13 +49,17 @@ def imshow(tensor, title=None):
     plt.imshow(img, cmap='gray')
     if title is not None:
         plt.title(title)
-    plt.show()
     plt.pause(0.5)
 
-# plt.figure()
-# for i in range(2):
-#     imshow(train_set.data[i] , title='MNIST example ({})'.format(train_set.classes[i]) )
-# plt.close()
+plt.figure()
+for ii in range(10):
+    imshow(train_set.data[ii,:,:] , title='MNIST example ({})'.format(train_set.targets[ii]))
+# to display 10 random images from training set
+#import random # put it at the beggining of the program
+#for ii in random.sample(range(len(train_set)), 10):
+#    imshow(train_set.data[ii,:,:] , title='MNIST example ({})'.format(train_set.targets[ii]))
+
+plt.close()
 
 # define MLP model
 DATA_SIZE = train_set.data[0].size()[0] * train_set.data[0].size()[1]
@@ -70,6 +74,7 @@ class RegSoftNet(nn.Module):
         self.fc = nn.Linear(DATA_SIZE, NUM_CLASSES)
     def forward(self, x):
         x = x.view(-1, DATA_SIZE) # reshape the tensor
+        # x = F.relu(self.fc(x))
         x = self.fc(x)
         return x
 
@@ -80,7 +85,7 @@ class MLPNet(nn.Module):
         self.fc2 = nn.Linear(NUM_HIDDEN_1, NUM_HIDDEN_2)
         self.fc3 = nn.Linear(NUM_HIDDEN_2, NUM_CLASSES)
     def forward(self, x):
-        x = x.view(-1, DATA_SIZE) # reshape the tensor
+        x = x.view(-1, DATA_SIZE) # reshape the tensor 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -94,17 +99,18 @@ NUM_FC=500 # try 1024
 class CNNNet(nn.Module):
     def __init__(self):
         super(CNNNet,self).__init__()
-        self.conv_1 = nn.Conv2d(in_channels=1, out_channels=NUM_CONV_1, kernel_size=5, stride=1) # kernel_size = 5 => filtres 5x5
-        self.conv_2 = nn.Conv2d(in_channels=NUM_CONV_1, out_channels=NUM_CONV_2, kernel_size=5, stride=1) # kernel_size = 5
+        self.conv_1 = nn.Conv2d(1, NUM_CONV_1, 5, 1) # kernel_size = 5
+        self.conv_2 = nn.Conv2d(NUM_CONV_1, NUM_CONV_2, 5, 1) # kernel_size = 5
+        # self.drop = nn.Dropout2d()
         self.fc_1 = nn.Linear(4*4*NUM_CONV_2, NUM_FC)
         self.fc_2 = nn.Linear(NUM_FC, NUM_CLASSES)
-
     def forward(self,x):
         x = F.relu(self.conv_1(x))
         x = F.max_pool2d(x,2,2)
         x = F.relu(self.conv_2(x))
+        # x = F.relu(self.drop(self.conv_2(x)))
         x = F.max_pool2d(x,2,2)
-        x = x.view(-1, 4*4*NUM_CONV_2) # to find 4 we apply the formula to get dim of data after the Conv and Max Pooling layers
+        x = x.view(-1,4*4*NUM_CONV_2)
         x = F.relu(self.fc_1(x))
         x = self.fc_2(x)
         return x
@@ -112,15 +118,16 @@ class CNNNet(nn.Module):
         # return F.log_softmax(x, dim=1)
 
 # define model (choose MLP or CNN)
-# model = RegSoftNet()
-# model = MLPNet()
-model = CNNNet()
+is_cnn=False
+#model = RegSoftNet()
+#model = MLPNet()
+model = CNNNet(); is_cnn=True
 
 model.to(device) # puts model on GPU / CPU
 
 # optimization hyperparameters
-optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
-loss_fn = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.05) # try lr=0.01, momentum=0.9
+loss_fn = nn.CrossEntropyLoss()
 
 # main loop (train+test)
 for epoch in range(10):
@@ -151,3 +158,14 @@ for epoch in range(10):
     print('Accuracy: {}/{} (tx {:.2f}%, err {:.2f}%)\n'.format(correct,
      len(test_loader.dataset), taux_classif, 100.-taux_classif))
 
+# BONUS: save model to disk (for further inference)
+if is_cnn == True:
+    filename = 'model_cnn.pth'
+    torch.save(model.state_dict(), "params_"+filename)
+    torch.save(model, filename)
+    print("saved model to {}".format(filename))
+else:
+    filename = 'model_mlp.pth'
+    torch.save(model.state_dict(), "params_"+filename)
+    torch.save(model, filename)
+    print("saved model to {}".format(filename))
