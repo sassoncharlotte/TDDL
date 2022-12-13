@@ -12,13 +12,15 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision import datasets, transforms
+# import warnings
+# import matplotlib.cbook
+# warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 
 # we use GPU if available, otherwise CPU
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
-# import datasets 
-from torchvision import datasets, transforms
 
 trans = transforms.Compose( [ transforms.ToTensor(), transforms.Normalize( (0.1307,),(0.3081,))])
 
@@ -30,14 +32,14 @@ batch_size = 100
 train_loader = torch.utils.data.DataLoader(
                  dataset=train_set,
                  batch_size=batch_size,
-                 shuffle=TODO)
+                 shuffle=True)
 test_loader = torch.utils.data.DataLoader(
                 dataset=test_set,
                 batch_size=batch_size,
-                shuffle=TODO)
+                shuffle=False)
 
-print('total training batch number: {}'.format(TODO))
-print('total testing batch number: {}'.format(TODO))
+print('total training batch number: {}'.format(len(train_loader)))
+print('total testing batch number: {}'.format(len(test_loader)))
 
 # display some images
 # for an alternative see https://pytorch.org/tutorials/advanced/neural_style_tutorial.html
@@ -47,16 +49,17 @@ def imshow(tensor, title=None):
     plt.imshow(img, cmap='gray')
     if title is not None:
         plt.title(title)
+    plt.show()
     plt.pause(0.5)
 
-plt.figure()
-for ii in range(10):
-    imshow(train_set.TODO , title='MNIST example ({})'.format(train_set.TODO) )
-plt.close()
+# plt.figure()
+# for i in range(2):
+#     imshow(train_set.data[i] , title='MNIST example ({})'.format(train_set.classes[i]) )
+# plt.close()
 
 # define MLP model
-DATA_SIZE = TODO
-NUM_CLASSES = TODO
+DATA_SIZE = train_set.data[0].size()[0] * train_set.data[0].size()[1]
+NUM_CLASSES = len(set(train_set.classes))
 NUM_HIDDEN_1 = 256 # try 512
 NUM_HIDDEN_2 = 256
 
@@ -64,42 +67,44 @@ NUM_HIDDEN_2 = 256
 class RegSoftNet(nn.Module):
     def __init__(self):
         super(RegSoftNet, self).__init__()
-        self.fc = TODO
+        self.fc = nn.Linear(DATA_SIZE, NUM_CLASSES)
     def forward(self, x):
         x = x.view(-1, DATA_SIZE) # reshape the tensor
-        x = TODO
+        x = self.fc(x)
         return x
 
 class MLPNet(nn.Module):
     def __init__(self):
         super(MLPNet, self).__init__()
-        self.fc1 = TODO
-        self.fc2 = TODO
-        self.fc3 = TODO
+        self.fc1 = nn.Linear(DATA_SIZE, NUM_HIDDEN_1)
+        self.fc2 = nn.Linear(NUM_HIDDEN_1, NUM_HIDDEN_2)
+        self.fc3 = nn.Linear(NUM_HIDDEN_2, NUM_CLASSES)
     def forward(self, x):
-        x = x.view(-1, DATA_SIZE) # reshape the tensor 
-        x = TODO
-        x = TODO
-        x = TODO
+        x = x.view(-1, DATA_SIZE) # reshape the tensor
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return x
 
 
-NUM_CONV_1=TODO
-NUM_CONV_2=TODO
-NUM_FC=TODO
+NUM_CONV_1=10 # try 32
+NUM_CONV_2=20 # try 64
+NUM_FC=500 # try 1024
+
 class CNNNet(nn.Module):
     def __init__(self):
         super(CNNNet,self).__init__()
-        self.conv_1 = nn.Conv2d(TODO,TODO,5,1) # kernel_size = 5
-        self.conv_2 = nn.Conv2d(TODO,TODO,5,1) # kernel_size = 5
-        self.fc_1 = nn.Linear(TODO_H, TODO)
-        self.fc_2 = nn.Linear(TODO,NUM_CLASSES)
+        self.conv_1 = nn.Conv2d(in_channels=1, out_channels=NUM_CONV_1, kernel_size=5, stride=1) # kernel_size = 5 => filtres 5x5
+        self.conv_2 = nn.Conv2d(in_channels=NUM_CONV_1, out_channels=NUM_CONV_2, kernel_size=5, stride=1) # kernel_size = 5
+        self.fc_1 = nn.Linear(4*4*NUM_CONV_2, NUM_FC)
+        self.fc_2 = nn.Linear(NUM_FC, NUM_CLASSES)
+
     def forward(self,x):
         x = F.relu(self.conv_1(x))
         x = F.max_pool2d(x,2,2)
         x = F.relu(self.conv_2(x))
         x = F.max_pool2d(x,2,2)
-        x = x.view(-1,TODO_H)
+        x = x.view(-1, 4*4*NUM_CONV_2) # to find 4 we apply the formula to get dim of data after the Conv and Max Pooling layers
         x = F.relu(self.fc_1(x))
         x = self.fc_2(x)
         return x
@@ -107,15 +112,15 @@ class CNNNet(nn.Module):
         # return F.log_softmax(x, dim=1)
 
 # define model (choose MLP or CNN)
-model = RegSoftNet()
-#model = MLPNet()
-#model = CNNNet()
+# model = RegSoftNet()
+# model = MLPNet()
+model = CNNNet()
 
 model.to(device) # puts model on GPU / CPU
 
 # optimization hyperparameters
-optimizer = TODO
-loss_fn = TODO
+optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
+loss_fn = torch.nn.CrossEntropyLoss()
 
 # main loop (train+test)
 for epoch in range(10):
