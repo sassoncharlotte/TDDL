@@ -21,7 +21,7 @@ class Generator(nn.Module):
 
 def main(argv):
     N_data= FLAGS.N_data
-    all_model  = torch.load(FLAGS.model_path, map_location=device)
+    all_model  = torch.load("/Users/cha/Desktop/Code/TDDL/5_GAN/model_gan_circle.pth", map_location=device)
     size_out   = all_model['G_state_dict']['fout.weight'].shape[0]
     size_latent= all_model['G_state_dict']['fc1.weight'].shape[0]
     latent_dim = all_model['G_state_dict']['fc1.weight'].shape[1]
