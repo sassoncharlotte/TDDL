@@ -98,6 +98,7 @@ while (nos_image>=0):
     fig_0.canvas.draw()
     fig_1.canvas.draw()
     fig_2.canvas.draw()
+    plt.show()
     plt.pause(0.5)
     nos_image = int(input('Image number ?: '))
 plt.close()

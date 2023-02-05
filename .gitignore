@@ -5,6 +5,8 @@
 6_nlp_scratch/README
 1_fizzbuzz/data/MNIST
 1_fizzbuzz/TD1_CS.*
+data
+.DS_Store
 
 *.pth
 
