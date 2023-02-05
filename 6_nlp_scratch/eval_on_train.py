@@ -7,7 +7,7 @@ from utils import *
 model='rnn'
 
 # get list of all possible category names from trianing data
-datapath='/Users/cha/Desktop/Code/TDDL/data/data/names/'
+datapath='data/names/'
 train_data,all_categories = get_language_data(datapath)
 
 #initialize confusion matrix
@@ -44,14 +44,15 @@ for categ in train_data.keys():
         confusion[category_i][guess_i] += 1
 
 effectif = confusion.sum(dim=0)
+
 print('----------------\n   Scores\n----------------')
 for i in range(n_categories):
-    confusion[i] = confusion[i] / (1e-16+confusion[i].sum())
-    print(  '   {} \t {:2.1%}'.format( all_categories[i],(confusion[i][i]).item()))
-print('------')
-print(  'Global (flat) \t {:2.1%}'.format(  confusion.diag().mean().item() ))
+    confusion[i] = confusion[i] / (1e-16 + confusion[i].sum())
+    print(  '   {} \t {:2.1%}'.format(all_categories[i], (confusion[i][i]).item()))
+print('-----------')
+print(  'Global (flat) \t {:2.1%}'.format(confusion.diag().mean().item() ))
 weighted_conf = confusion.diag() * (effectif / effectif.sum())
-print(  'Global (wght) \t {:2.1%}'.format(  weighted_conf.sum().item() ))
+print(  'Global (wght) \t {:2.1%}'.format(weighted_conf.sum().item() ))
 print('-----------\n')
 
 import matplotlib.pyplot as plt

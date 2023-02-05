@@ -7,7 +7,7 @@ from utils import *
 import time
 
 ### get training data
-datapath='/Users/cha/Desktop/Code/TDDL/data/data/names/'
+datapath='data/names/'
 train_data, all_categories = get_language_data(datapath)
 n_categories = len(all_categories)
 
