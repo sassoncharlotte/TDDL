@@ -7,7 +7,7 @@ from utils import *
 model='rnn'
 
 # get list of all possible category names from trianing data
-datapath='data/names/'
+datapath='/Users/cha/Desktop/Code/TDDL/data/data/names/'
 train_data,all_categories = get_language_data(datapath)
 
 #initialize confusion matrix

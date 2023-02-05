@@ -7,8 +7,8 @@ from utils import *
 import time
 
 ### get training data
-datapath='data/names/'
-train_data,all_categories = get_language_data(datapath)
+datapath='/Users/cha/Desktop/Code/TDDL/data/data/names/'
+train_data, all_categories = get_language_data(datapath)
 n_categories = len(all_categories)
 
 print(f'There are {n_categories} languages.\nNumber of family name per language:')
@@ -38,6 +38,7 @@ def train(category_tensor, line_tensor):
         p.data.add_(p.grad.data, alpha=-learning_rate)
 
     return output, loss.item()
+
 
 n_iters = 100000
 print_every = 5000
